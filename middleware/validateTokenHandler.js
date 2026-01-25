@@ -4,11 +4,11 @@ const User = require("../models/userModel");
 
 const validateToken = async (req, res, next) => {
   try {
-    const cookies = req.cookies;
+    const cookies = req.cookies || {};
     const { token } = cookies;
     console.log("Cookies: ", cookies);
     if (!token) {
-      throw new Error("Invalid Token, Please login again");
+      return res.status(401).json({ message: "Invalid token, please login again" });
     }
     const decodeObj = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     console.log(decodeObj.user.id);
@@ -16,12 +16,13 @@ const validateToken = async (req, res, next) => {
 
     const user = await User.findById(id);
     if (!user) {
-      throw new Error("User does not Exit");
+      return res.status(401).json({ message: "User does not exist" });
     }
     req.user = user;
     next();
   } catch (err) {
     console.log(err);
+    return res.status(401).json({ message: err.message || "Not authorized" });
   }
 };
 

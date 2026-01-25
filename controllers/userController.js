@@ -22,9 +22,10 @@ const registerUser = expressAsyncHandler(async (req, res) => {
     email,
     password: hashPassword,
   });
-  newUser.save();
+  await newUser.save();
 
-  res.status(201).json(newUser);
+  // return safe public fields only
+  res.status(201).json({ id: newUser._id, userName: newUser.userName, email: newUser.email });
 });
 
 const loginUser = expressAsyncHandler(async (req, res) => {
@@ -36,6 +37,11 @@ const loginUser = expressAsyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
   // compare password with hashed password
   if (user && (await bcrypt.compare(password, user.password))) {
+    const secret = process.env.ACCESS_TOKEN_SECRET || "dev_secret"
+    if (!process.env.ACCESS_TOKEN_SECRET) {
+      console.warn("WARNING: ACCESS_TOKEN_SECRET is not set. Using development fallback secret.");
+    }
+
     const accessToken = jwt.sign(
       {
         user: {
@@ -44,11 +50,17 @@ const loginUser = expressAsyncHandler(async (req, res) => {
           id: user.id,
         },
       },
-      process.env.ACCESS_TOKEN_SECRET,
+      secret,
       { expiresIn: "15m" }
     );
     console.log("Generated Access Token: ", accessToken);
-    res.cookie("token", accessToken);
+    // Set cookie with reasonable dev options. In production set `secure: true` and proper domain.
+    res.cookie("token", accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 15 * 60 * 1000,
+    });
     res.status(200).json({ accessToken });
   } else {
     res.status(401);
@@ -57,9 +69,15 @@ const loginUser = expressAsyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = expressAsyncHandler(async (req, res) => {
-    console.log("Inside getCurrentUser controller");
-    console.log("Req User: ", req.user);
-  res.json({ message: "Current User Information123" });
+  console.log("Inside getCurrentUser controller");
+  console.log("Req User: ", req.user);
+  if (!req.user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+  res.status(200).json({
+    message: "Current User Information",
+    user: { id: req.user._id, userName: req.user.userName, email: req.user.email },
+  });
 });
 
 module.exports = { registerUser, loginUser, getCurrentUser };

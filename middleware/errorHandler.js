@@ -3,55 +3,34 @@ const { constants } = require("../constants");
 const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode ? res.statusCode : 500;
 
+  let payload = { message: err.message, stackTrace: err.stack, status: statusCode };
+
   switch (statusCode) {
     case constants.VALIDATION_ERROR:
-      res.json({
-        title: "Validation Failed",
-        message: err.message,
-        stackTrace: err.stack,
-      });
+      payload.title = "Validation Failed";
       break;
     case constants.UNAUTHORIZED:
-      res.json({
-        title: "Unauthorized",
-        message: err.message,
-        stackTrace: err.stack,
-      });
+      payload.title = "Unauthorized";
       break;
     case constants.FORBIDDEN:
-      res.json({
-        title: "Forbidden",
-        message: err.message,
-        stackTrace: err.stack,
-      });
+      payload.title = "Forbidden";
       break;
     case constants.NOT_FOUND:
-      res.json({
-        title: "Not Found",
-        message: err.message,
-        stackTrace: err.stack,
-      });
+      payload.title = "Not Found";
       break;
     case constants.SERVER_ERROR:
-      res.json({
-        title: "Server Error",
-        message: err.message,
-        stackTrace: err.stack,
-      });
+      payload.title = "Server Error";
       break;
     case 404:
-      res.json({
-        title: "Not Found",
-        message: err.message,
-        stackTrace: err.stack,
-      });
+      payload.title = "Not Found";
       break;
     default:
       console.log("No Error, All Good!");
       break;
   }
 
-  res.json({ message: err.message, stackTrace: err.stack, status: statusCode });
+  // send a single JSON response
+  res.status(statusCode).json(payload);
 };
 
 module.exports = { errorHandler };

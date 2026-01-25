@@ -11,6 +11,6 @@ router.post("/register", registerUser);
 
 router.post("/login", loginUser);
 
-router.post("/current",validateToken, getCurrentUser);
+router.get("/current", validateToken, getCurrentUser);
 
 module.exports = router;
