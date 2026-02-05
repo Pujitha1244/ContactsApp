@@ -4,6 +4,7 @@ require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const path = require('path');
 const rateLimit = require("express-rate-limit");
+const serverless = require('serverless-http');
 
 const connectDb = require("./config/dbConnection");
 
@@ -49,3 +50,6 @@ connectDb()
     console.log('Database Connection Failed');
     console.log(err);
   });
+
+module.exports = app;
+module.exports.handler = serverless(app);
